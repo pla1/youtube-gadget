@@ -1,4 +1,4 @@
-youtube-gadget
-==============
+YouTube Gadget
+=============
 
-YouTube Gadget displays your video view counts. 
+Display YouTube upload view counts. 

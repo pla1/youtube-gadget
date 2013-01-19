@@ -1,0 +1,17 @@
+{
+  "name": "YouTube Gadget",
+  "main": "index.html",
+  "description": "Review your or another user's uploaded video view counts. Sort by published date or view count.",
+  "version": "0.1",
+  "keywords": [ "YouTube", "Video" ],
+  "window": {
+     "frame": false,
+     "width": 600,
+     "height": 600,
+     "position": "mouse", 
+     "min_width": 600,
+     "min_height": 600,
+     "max_width": 600,
+     "max_height": 600
+  }
+}

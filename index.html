@@ -1,0 +1,160 @@
+<html>
+  <head>
+    <title>YouTube Gadget</title>
+    <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'> 
+    <style>
+      body.drag {
+        -webkit-app-region: drag;
+        background-image:url('youtube-logo600x600t20.png');
+        background-color:silver; 
+      }
+      .noDrag {
+        -webkit-app-region: no-drag;
+      }
+      div, h1, p {
+        font-family: 'Ubuntu', sans-serif;
+      }
+      div {
+        font-size:15px;
+        margin:5px;
+      }
+      h1 {
+        font-size:30px;  
+        margin:2px;
+      }
+      h2 {
+        font-size:20px;  
+        margin:2px;
+      }
+      p {
+        margin:2px;
+      }
+      td {
+        font-size:14px;
+      }
+      .numeric {
+        text-align: right;
+      }
+      .formField {
+        font-size:10pt;
+        -webkit-app-region: no-drag;
+      }
+      #pageDiv {
+
+      }
+      #southDiv {
+        position:absolute;
+        bottom:0;
+        width:93%;
+      }
+    </style>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="date.js"></script>
+    <script>
+      (function($){
+        $.isBlank = function(obj){
+          return(!obj || $.trim(obj) === "");
+        };
+      })(jQuery);
+      var gui = require('nw.gui');
+      var mode = localStorage.mode;
+      document.onkeydown = checkKey;
+      if ($.isBlank(localStorage.sortOrder)) {
+        localStorage.sortOrder='viewCount';
+      }
+      function checkKey(e) {
+        e = e || window.event;
+        console.log('Key pressed: ' + e.keyCode);
+        if (e.keyCode=='27' | e.keyCode=='81') {
+          gui.App.quit();
+        }
+        if (e.keyCode=='72') {
+          displayHelp();
+        }
+        if (e.keyCode=='36') {
+          getList(-999999);
+        }
+        if (e.keyCode=='83') {
+          displaySettings();
+          return false; 
+        }
+        if ($('#submitButton') && e.keyCode=='13') {
+          $('#submitButton').click();
+        }
+      }
+      function storeFormData() {
+        localStorage.username=$('#username').val();
+        if ($('#radioPublishedId').is(':checked')) {
+          localStorage.sortOrder='published';
+        } else {
+          localStorage.sortOrder='viewCount';
+        }
+        console.log('localStorage.sortOrder set to: ' + localStorage.sortOrder);
+        getList(0);
+      }
+      function fillFormData() {
+        $('#username').val(localStorage.username);
+        if (localStorage.sortOrder=='published') {
+          $('#radioPublishedId').prop('checked',true);
+        } else {
+          $('#radioViewCountId').prop('checked',true);
+        }
+        $('#username').focus();
+      }
+      function cleanPage() {
+        $('#northDiv').empty();
+        $('#centerDiv').empty();
+        $('#southDiv').empty();
+      }
+      function displaySettings() {
+        cleanPage();
+        $('#northDiv').html('<h1>Settings</h1>');
+        $('#centerDiv').append('<div class=formField>YouTube user name:<input id=username type=text /><div>');
+        $('#centerDiv').append('<div class=formField>Sort by:<input id=radioPublishedId type=radio name=sortgroup>Published date<input id=radioViewCountId type=radio name=sortgroup>View count<div>');
+        $('#centerDiv').append('<div class=formField><button id=submitButton class=noDrag onclick="storeFormData();return false;">Submit</button><div>');
+        fillFormData();
+      }
+      function displayHelp() {
+        cleanPage();
+        $('#northDiv').html('<h1>Help</h1>');
+        $('#centerDiv').html('<h2>Keyboard Shortcuts</h2><ul id="shortcut"></ul>');
+        var shortcuts = ["left arrow=previous","right arrow=next","Enter=play", "Escape=quit", "Home=home", "h=help","p=play", "q=quit","r=recordings","s=settings","u=upcoming"];
+        var shortcutContainer = $("#shortcut");
+        $.each(shortcuts, function(index, value) {
+          $("<li/>").html(value).appendTo(shortcutContainer).hide();
+        });
+        $("li", shortcutContainer).slideDown(1000); 
+        $('#centerDiv').append("<p><i>NOTE: Keyboard shortcuts active where appropriate.</i></p>");
+      }
+      function getList(increment) {
+        if ($.isBlank(localStorage.username)) {
+          displaySettings();
+          return; 
+        }
+        cleanPage();
+        var urlString = 'http://gdata.youtube.com/feeds/api/users/'+localStorage.username+'/uploads?max-results=20&orderby='+localStorage.sortOrder+'&v=2&alt=json';
+        console.log(urlString);
+        $('#southDiv').empty();
+        $('#centerDiv').html('<table id=tableId><tbody></tbody></table>');
+        $.getJSON(urlString, function(data) {
+          var jsonItems = data.feed.entry;
+          $('#northDiv').html('<h1>'+data.feed.title.$t+'</h1>');
+          $.each(jsonItems, function(i,item) {
+            var viewCount = 0; 
+            if (item.yt$statistics && item.yt$statistics.viewCount) {
+              viewCount = item.yt$statistics.viewCount;
+            }
+            $('#tableId').find('tbody').append($('<tr>').append($('<td>').text(item.title.$t)).append($('<td class=numeric>').text(viewCount)));
+          });
+        });
+      }
+    </script>
+  </head>
+  <body class="drag" onload='getList(0);'>
+    <div id=pageDiv>
+      <div id=northDiv></div>
+      <div id=centerDiv></div>
+      <div id=southDiv></div>
+    </div>
+  </body>
+</html>
